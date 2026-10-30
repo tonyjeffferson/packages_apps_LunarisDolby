@@ -1,82 +1,29 @@
-# Dolby Atmos
+# Lunaris Dolby
 
-Dolby audio effects and Codec2 decoders.
+A privileged Android app for controlling Dolby audio features exposed by the device's audio stack.
 
-## Getting Started
+## This repository
 
-### 1. Media Codecs
+This fork contains the app only. It does not ship the Dolby DMS HAL, Codec2 decoders, proprietary vendor libraries, VINTF declarations, init services, or vendor SELinux policy. The app alone does not provide Dolby audio processing or codec support.
 
-To enable Dolby AC-3, E-AC-3, E-AC-3 JOC, and AC-4 decoding, make sure your device supports Codec2 and add the following line to your vendor media codecs configuration:
+## Build and package
 
-```xml
-<Include href="media_codecs_dolby_audio.xml" />
+Build the app with the Android build system:
+
+```sh
+m LunarisDolby
 ```
 
-### 2. Audio Effects
-
-Both software and hardware Dolby Audio Processing (DAP) implementations are supported:
-
-- `libswdap.so` — Software DAP (default).
-- `libhwdap.so` — Hardware DAP.
-
-Check which DAP implementation is used by inspecting `audio_effects.xml` in your stock ROM dump.
-
-Register the appropriate Dolby effects in your device's `audio_effects.xml`.
-
-### 3. Build Configuration
-
-Include the Dolby configuration in your device's product makefile.
-
-**For builds with Software DAP (default):**
+Add `LunarisDolby` to the product package list:
 
 ```makefile
-$(call inherit-product, hardware/dolby/dolby.mk)
+PRODUCT_PACKAGES += LunarisDolby
 ```
 
-**For builds with Hardware DAP:**
+The build target includes the app's preinstalled-package and privileged-permission declarations.
 
-```makefile
-USE_HWDAP := true
-$(call inherit-product, hardware/dolby/dolby.mk)
-```
+## Device audio integration
 
-### 4. VINTF Configuration
+The device or a separate hardware Dolby project must provide a compatible Dolby backend. Integrate the backend components in the device/vendor tree, including the required audio effects registration, media codec configuration, VINTF declarations, init services, and SELinux policy.
 
-Avoid overriding existing device manifest and framework compatibility matrix definitions.
-
-In your device's `BoardConfig.mk`, use `+=` instead of `:=` when appending manifest or compatibility matrix files.
-
-**Incorrect:**
-
-```makefile
-DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE :=
-DEVICE_MANIFEST_FILE :=
-```
-
-**Correct:**
-
-```makefile
-DEVICE_FRAMEWORK_COMPATIBILITY_MATRIX_FILE += \
-    path/to/compatibility_matrix.xml
-
-DEVICE_MANIFEST_FILE += \
-    path/to/manifest.xml
-```
-
-This preserves previously defined entries and helps prevent the device tree from unintentionally replacing existing VINTF declarations.
-
-### 5. SELinux Configuration
-
-For MediaTek (MTK) devices, add the following rule to your device's `hal_dms_default.te`:
-
-```te
-get_prop(hal_dms_default, vendor_mtk_audio_prop)
-```
-
-This allows the Dolby DMS HAL to read MediaTek vendor audio properties.
-
-## Testing
-
-Use the official Dolby test samples to verify audio playback and codec support:
-
-[Dolby Mobile Tests](https://ott.dolby.com/Mobile_tests/index.html)
+The full Dolby integration can support AC-3, E-AC-3, E-AC-3 JOC, and AC-4 decoding, along with software or hardware Dolby Audio Processing (DAP), depending on the device and its vendor libraries. Select and configure only the backend supported by the device. Those codecs, libraries, and integration files are outside this app-only repository.
